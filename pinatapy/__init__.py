@@ -1,5 +1,6 @@
 """Non-official Python library for Pinata.cloud"""
 
+from copy import deepcopy
 import os
 import typing as tp
 
@@ -35,7 +36,7 @@ class PinataPy:
         More: https://docs.pinata.cloud/api-pinning/pin-file
         """
         url: str = API_ENDPOINT + "pinning/pinFileToIPFS"
-        headers: Headers = self._auth_headers
+        headers: Headers = { k: self._auth_headers[k] for k in ["pinata_api_key", "pinata_secret_api_key"] }
 
         def get_all_files(directory: str) -> tp.List[str]:
             """get a list of absolute paths to every file located in the directory"""
@@ -58,7 +59,9 @@ class PinataPy:
                 headers["pinataMetadata"] = options["pinataMetadata"]
             if "pinataOptions" in options:
                 headers["pinataOptions"] = options["pinataOptions"]
+        print(f"{url=}, {files=}, {headers=}")
         response: requests.Response = requests.post(url=url, files=files, headers=headers)
+        print(f"{response=}")
         return response.json() if response.ok else self._error(response)  # type: ignore
 
     def pin_hash_to_ipfs(self, hash_to_pin: str, options: tp.Optional[OptionsDict] = None) -> ResponsePayload:
@@ -131,3 +134,8 @@ class PinataPy:
         url: str = API_ENDPOINT + "data/userPinnedDataTotal"
         response: requests.Response = requests.get(url=url, headers=self._auth_headers)
         return response.json() if response.ok else self._error(response)  # type: ignore
+
+
+if __name__ == "__main__":
+    pinata = PinataPy("a77cf04abafb038d86a5", "4730eabb8a84a0fc44ac74b70ba24239297c6186227b525654fd96e134595ccb")
+    pinata.pin_file_to_ipfs("/home/khassanov/Workspace/github.com/khssnv/pinatapy/setup.py")
